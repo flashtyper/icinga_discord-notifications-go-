@@ -36,7 +36,6 @@ func host_or_service (icingaMap map[string]string) {
 
 
 func get_emote (service_state string) (emote string) {
-
         emojiMap := map[string]string {
                 "OK": ":white_check_mark:",
                 "RECOVERY": ":white_check_mark:",
