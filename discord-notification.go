@@ -3,6 +3,9 @@ package main
 import (
     "fmt"
     "os"
+    "encoding/json"
+    "net/http"
+    "bytes"
 )
 
 
@@ -14,24 +17,28 @@ func main() {
     }
 
     if icingaMap["notification_type"] == "CUSTOM" {
-        custom(icingaMap)
+            message := custom(icingaMap)
+            send_msg(icingaMap["webhook_username"], icingaMap["webhook_url"], message)
     } else {
-        host_or_service(icingaMap)
+            message := host_or_service(icingaMap)
+            send_msg(icingaMap["webhook_username"], icingaMap["webhook_url"], message)
     }
 }
 
-func custom (icingaMap map [string]string) {
+
+func custom (icingaMap map [string]string) (message string){
         emote := get_emote(icingaMap["notification_type"])
-        notification := fmt.Sprintf("%v %v: %v%v%v%v%v%v%v%v%v: %v%v%v%v", emote, icingaMap["notification_type"], "Service **", icingaMap["service_name"], "** on host **", icingaMap["host_name"], "** is in state **", icingaMap["service_state"], "**!\n", "```", icingaMap["notification_author"], icingaMap["notification_comment"], "\n\n", icingaMap["service_output"], "```")
-        fmt.Println(notification)
+        message = fmt.Sprintf("%v %v: %v%v%v%v%v%v%v%v%v: %v%v%v%v", emote, icingaMap["notification_type"], "Service **", icingaMap["service_name"], "** on host **", icingaMap["host_name"], "** is in state **", icingaMap["service_state"], "**!\n", "```", icingaMap["notification_author"], icingaMap["notification_comment"], "\n\n", icingaMap["service_output"], "```")
+        return
 }
 
-func host_or_service (icingaMap map[string]string) {
+
+func host_or_service (icingaMap map[string]string) (message string) {
         if icingaMap["service_name"] != "" {
                 emote := get_emote(icingaMap["service_state"])
-                notification := fmt.Sprintf("%v %v: %v%v%v%v%v%v%v%v%v%v", emote, icingaMap["notification_type"], "Service **", icingaMap["service_name"], "** on host **", icingaMap["host_name"], "** changed to **", icingaMap["service_state"], "**!\n", "```", icingaMap["service_output"], "```")
-        fmt.Println(notification)
+                message = fmt.Sprintf("%v %v: %v%v%v%v%v%v%v%v%v%v", emote, icingaMap["notification_type"], "Service **", icingaMap["service_name"], "** on host **", icingaMap["host_name"], "** changed to **", icingaMap["service_state"], "**!\n", "```", icingaMap["service_output"], "```")
         }
+        return
 }
 
 
@@ -54,3 +61,10 @@ func get_emote (service_state string) (emote string) {
 }
 
 
+func send_msg (username string, url string, message string) () {
+        payload := make(map[string]string)
+        payload["username"] = username
+        payload["content"] = message
+        json, _ := json.Marshal(payload)
+        http.Post(url, "application/json", bytes.NewBuffer(json))
+}
